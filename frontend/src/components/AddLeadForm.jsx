@@ -46,11 +46,18 @@ export default function AddLeadForm({ onSuccess, onClose, initialValues = null, 
     try {
       const payload =
         mode === 'edit'
-          ? { name: formData.name, email: formData.email, phone: formData.phone, status: formData.status }
+          ? { 
+              name: formData.name, 
+              email: formData.email, 
+              phone: formData.phone, 
+              status: formData.status 
+            }
           : {
               ...formData,
               source: 'Web',
               serviceRequested: 'CRM Setup',
+              // FIXED: Match the POST campaign ID to the GET campaign ID
+              campaignId: '64f0c3a1f0d1c2a3b4c5d6e7', 
             };
 
       const response =

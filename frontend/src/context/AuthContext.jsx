@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API, { setAuthHandlers } from '../services/api';
 
@@ -7,7 +7,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token') || '');
+  const [token, setToken] = useState(() => localStorage.getItem('token') || '');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,45 +23,47 @@ export function AuthProvider({ children }) {
 
     setToken(storedToken);
     API.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-    setUser({ token: storedToken });
+    setUser({ token: storedToken }); // Optional: In the future, you might want to fetch the real user profile here
     setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
     const response = await API.post('/auth/login', { email, password });
     const { token: authToken, user: authUser } = response.data;
 
     localStorage.setItem('token', authToken);
     setToken(authToken);
     setUser(authUser);
+    API.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
 
     return response.data;
-  };
+  }, []);
 
-  const register = async (name, email, password) => {
+  const register = useCallback(async (name, email, password) => {
     const response = await API.post('/auth/register', { name, email, password });
     const { token: authToken, user: authUser } = response.data;
 
     localStorage.setItem('token', authToken);
     setToken(authToken);
     setUser(authUser);
+    API.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
 
     return response.data;
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('token');
     delete API.defaults.headers.common['Authorization'];
     setToken('');
     setUser(null);
-  };
+  }, []);
 
   useEffect(() => {
     setAuthHandlers({
       logout,
       redirect: (path) => navigate(path, { replace: true }),
     });
-  }, [navigate]);
+  }, [navigate, logout]);
 
   const value = useMemo(
     () => ({ user, token, isLoading: loading, login, register, logout }),
