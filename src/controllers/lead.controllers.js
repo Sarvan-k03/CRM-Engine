@@ -1,20 +1,12 @@
 const Lead = require('../models/Lead.models');
-const Campaign = require('../models/Campaign.models');
 
 // @desc    Create a new lead for a campaign
 // @route   POST /api/leads
 // @access  Private (All Roles)
 const createLead = async (req, res) => {
   try {
-    const { name, email, phone, city, serviceRequested, source, campaignId } = req.body;
+    const { name, email, phone, city, serviceRequested, source, campaignId, status } = req.body;
 
-    // 1. Verify the campaign actually exists
-    const campaign = await Campaign.findById(campaignId);
-    if (!campaign) {
-      return res.status(404).json({ success: false, message: 'Campaign not found' });
-    }
-
-    // 2. Create the lead
     const lead = await Lead.create({
       name,
       email,
@@ -22,7 +14,8 @@ const createLead = async (req, res) => {
       city,
       serviceRequested,
       source,
-      campaignId
+      campaignId: campaignId || null,
+      status: status || 'New',
     });
 
     res.status(201).json({ success: true, data: lead });

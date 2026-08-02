@@ -38,8 +38,8 @@ const leadSchema = new mongoose.Schema(
     campaignId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Campaign',
-      required: [true, 'Campaign reference ID is required'],
-      index: true, 
+      default: null,
+      index: true,
     },
     status: {
       type: String,
