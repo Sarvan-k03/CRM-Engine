@@ -1,41 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import API from '../services/api';
 
-export default function AddLeadForm({ initialData, onSuccess, onCancel }) {
+export default function AddClientForm({ initialData, onSuccess, onCancel }) {
   const [formData, setFormData] = useState({
-    name: '',
+    companyName: '',
+    contactName: '',
     email: '',
     phone: '',
-    company: '',
-    campaignId: '', // <-- Added campaign linking
-    status: 'New'
+    status: 'Active',
+    notes: ''
   });
-  const [campaigns, setCampaigns] = useState([]); // <-- State to hold campaigns
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // Fetch campaigns for the dropdown when the form opens
-  useEffect(() => {
-    const fetchCampaigns = async () => {
-      try {
-        const res = await API.get('/campaigns');
-        setCampaigns(res.data.data || []);
-      } catch (err) {
-        console.error('Failed to load campaigns:', err);
-      }
-    };
-    fetchCampaigns();
-  }, []);
-
-  // Pre-fill form if editing an existing lead
   useEffect(() => {
     if (initialData) {
       setFormData({
-        name: initialData.name || '',
+        companyName: initialData.companyName || '',
+        contactName: initialData.contactName || '',
         email: initialData.email || '',
         phone: initialData.phone || '',
-        company: initialData.company || initialData.companyName || '',
-        campaignId: initialData.campaignId?._id || initialData.campaignId || '', // <-- Safely set campaign ID
-        status: initialData.status || 'New'
+        status: initialData.status || 'Active',
+        notes: initialData.notes || ''
       });
     }
   }, [initialData]);
@@ -43,22 +29,19 @@ export default function AddLeadForm({ initialData, onSuccess, onCancel }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      const payload = {
-        ...formData,
-        companyName: formData.company // includes both field name variations for backend compatibility
-      };
+    setError('');
 
+    try {
       if (initialData) {
         const id = initialData._id || initialData.id;
-        await API.put(`/leads/${id}`, payload);
+        await API.put(`/clients/${id}`, formData);
       } else {
-        await API.post('/leads', payload);
+        await API.post('/clients', formData);
       }
-      
       if (onSuccess) onSuccess();
-    } catch (error) {
-      console.error('Failed to save lead:', error);
+    } catch (err) {
+      console.error('Failed to save client:', err);
+      setError(err.response?.data?.message || 'Failed to save client. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -70,49 +53,53 @@ export default function AddLeadForm({ initialData, onSuccess, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5 p-2 font-sans">
-      
+      {error && (
+        <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
       <div>
-        <label className="mb-1.5 block text-sm font-semibold text-gray-700">Lead Name *</label>
+        <label className="mb-1.5 block text-sm font-semibold text-gray-700">Company Name (Client) *</label>
         <input 
           required 
           type="text" 
-          name="name" 
-          value={formData.name} 
+          name="companyName" 
+          value={formData.companyName} 
           onChange={handleChange} 
-          placeholder="e.g. Jane Doe"
+          placeholder="e.g. Bob's Plumbing"
           className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:bg-white focus:outline-none transition-all" 
         />
       </div>
 
-      <div>
-        <label className="mb-1.5 block text-sm font-semibold text-gray-700">Source Campaign</label>
-        <select 
-          name="campaignId" 
-          value={formData.campaignId} 
-          onChange={handleChange} 
-          className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:bg-white focus:outline-none transition-all"
-        >
-          <option value="">-- Direct / No Campaign --</option>
-          {campaigns.map((c) => (
-            <option key={c._id || c.id} value={c._id || c.id}>
-              {c.name} ({c.clientId?.companyName || 'Unassigned Client'})
-            </option>
-          ))}
-        </select>
-      </div>
-
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
-          <label className="mb-1.5 block text-sm font-semibold text-gray-700">Email</label>
+          <label className="mb-1.5 block text-sm font-semibold text-gray-700">Primary Contact Name *</label>
           <input 
+            required
+            type="text" 
+            name="contactName" 
+            value={formData.contactName} 
+            onChange={handleChange} 
+            placeholder="e.g. Bob Smith"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:bg-white focus:outline-none transition-all" 
+          />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-gray-700">Contact Email *</label>
+          <input 
+            required
             type="email" 
             name="email" 
             value={formData.email} 
             onChange={handleChange} 
-            placeholder="jane@company.com"
+            placeholder="bob@plumbing.com"
             className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:bg-white focus:outline-none transition-all" 
           />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-gray-700">Phone</label>
           <input 
@@ -124,20 +111,6 @@ export default function AddLeadForm({ initialData, onSuccess, onCancel }) {
             className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:bg-white focus:outline-none transition-all" 
           />
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold text-gray-700">Company</label>
-          <input 
-            type="text" 
-            name="company" 
-            value={formData.company} 
-            onChange={handleChange} 
-            placeholder="Acme Corp"
-            className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:bg-white focus:outline-none transition-all" 
-          />
-        </div>
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-gray-700">Status</label>
           <select 
@@ -146,16 +119,25 @@ export default function AddLeadForm({ initialData, onSuccess, onCancel }) {
             onChange={handleChange} 
             className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:bg-white focus:outline-none transition-all"
           >
-            <option value="New">New</option>
-            <option value="Contacted">Contacted</option>
-            <option value="Qualified">Qualified</option>
-            <option value="Converted">Converted</option>
-            <option value="Rejected">Rejected</option>
+            <option value="Active">Active</option>
+            <option value="Paused">Paused</option>
+            <option value="Churned">Churned</option>
           </select>
         </div>
       </div>
 
-      {/* Form Action Buttons */}
+      <div>
+        <label className="mb-1.5 block text-sm font-semibold text-gray-700">Notes (Optional)</label>
+        <textarea 
+          name="notes" 
+          value={formData.notes} 
+          onChange={handleChange} 
+          placeholder="Any details about this client..."
+          rows="3"
+          className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:bg-white focus:outline-none transition-all" 
+        />
+      </div>
+
       <div className="mt-4 flex items-center justify-end gap-3 border-t border-gray-100 pt-5">
         <button 
           type="button" 
@@ -169,10 +151,9 @@ export default function AddLeadForm({ initialData, onSuccess, onCancel }) {
           disabled={loading} 
           className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 disabled:opacity-50 active:scale-[0.98]"
         >
-          {loading ? 'Saving...' : initialData ? 'Update Lead' : 'Save Lead'}
+          {loading ? 'Saving...' : initialData ? 'Update Client' : 'Save Client'}
         </button>
       </div>
-
     </form>
   );
 }

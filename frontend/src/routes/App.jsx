@@ -14,6 +14,8 @@ const Leads = lazy(() => import('../pages/Leads'));
 const Login = lazy(() => import('../pages/Login'));
 const Pipeline = lazy(() => import('../pages/Pipeline'));
 const Settings = lazy(() => import('../pages/Settings'));
+const Clients = lazy(() => import('../pages/Clients'));
+const Campaigns = lazy(() => import('../pages/Campaigns'));
 
 export default function App() {
   return (
@@ -29,10 +31,13 @@ export default function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/clients" element={<Clients />} />
+                <Route path="/campaigns" element={<Campaigns />} />
                 <Route path="/leads" element={<Leads />} />
                 <Route path="/leads/:id" element={<LeadDetails />} />
                 <Route path="/pipeline" element={<Pipeline />} />
                 <Route path="/settings" element={<Settings />} />
+
                 <Route element={<AdminRoute />}>
                   <Route path="/analytics" element={<Analytics />} />
                 </Route>

@@ -4,6 +4,23 @@ import API, { setAuthHandlers } from '../services/api';
 
 const AuthContext = createContext(null);
 
+// Helper function to decode JWT payload safely
+const parseJwt = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+};
+
 export function AuthProvider({ children }) {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -23,7 +40,11 @@ export function AuthProvider({ children }) {
 
     setToken(storedToken);
     API.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-    setUser({ token: storedToken }); // Optional: In the future, you might want to fetch the real user profile here
+    
+    // FIXED: Decode token to extract { id, role } instead of hardcoding { token: storedToken }
+    const decodedUser = parseJwt(storedToken);
+    setUser(decodedUser || { token: storedToken });
+
     setLoading(false);
   }, []);
 
@@ -33,7 +54,11 @@ export function AuthProvider({ children }) {
 
     localStorage.setItem('token', authToken);
     setToken(authToken);
-    setUser(authUser);
+
+    // If login response doesn't include user object, decode from JWT token
+    const decodedUser = authUser || parseJwt(authToken);
+    setUser(decodedUser);
+
     API.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
 
     return response.data;
@@ -45,7 +70,10 @@ export function AuthProvider({ children }) {
 
     localStorage.setItem('token', authToken);
     setToken(authToken);
-    setUser(authUser);
+
+    const decodedUser = authUser || parseJwt(authToken);
+    setUser(decodedUser);
+
     API.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
 
     return response.data;
