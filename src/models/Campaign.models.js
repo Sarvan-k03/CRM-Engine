@@ -2,36 +2,38 @@ const mongoose = require('mongoose');
 
 const campaignSchema = new mongoose.Schema(
   {
-    title: {
+    name: {
       type: String,
-      required: [true, 'Campaign title is required'],
+      required: [true, 'Campaign name is required'],
       trim: true,
     },
     clientId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: [true, 'Client ID reference is required'],
-      index: true, // Enables fast filtering by client
+      ref: 'Client',
+      required: [true, 'Campaign must be assigned to a Client'],
     },
     budget: {
       type: Number,
-      required: true,
+      default: 0,
+    },
+    startDate: {
+      type: Date,
+      default: Date.now,
+    },
+    endDate: {
+      type: Date,
     },
     status: {
       type: String,
       enum: ['Active', 'Paused', 'Completed'],
       default: 'Active',
     },
-    startDate: {
-      type: Date,
-    },
-    endDate: {
-      type: Date,
+    notes: {
+      type: String,
+      trim: true,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 module.exports = mongoose.model('Campaign', campaignSchema);

@@ -23,6 +23,10 @@ const leadSchema = new mongoose.Schema(
       trim: true,
       index: true, 
     },
+    company: {
+      type: String,
+      trim: true,
+    },
     city: {
       type: String,
       trim: true,

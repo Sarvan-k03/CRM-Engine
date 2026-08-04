@@ -6,6 +6,7 @@ const User = require('./src/models/User.models')
 const authRoutes = require('./src/routes/auth.routes')
 const campaignRoutes = require('./src/routes/campaign.routes')
 const leadRoutes = require('./src/routes/lead.routes');
+const clientRoutes = require('./src/routes/client.routes');
 
 require('dotenv').config()
 
@@ -40,6 +41,7 @@ connectDB()
     app.use('/api/auth', authRoutes);
     app.use('/api/campaigns', campaignRoutes);
     app.use('/api/leads', leadRoutes);
+    app.use('/api/clients', clientRoutes);
 
     app.get('/',(req,res)=>{
       res.json({
